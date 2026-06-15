@@ -1,0 +1,354 @@
+:root {
+    --primary: #4f46e5;
+    --primary-dark: #4338ca;
+    --bg: #0f172a;
+    --card: #1e293b;
+    --text: #e2e8f0;
+    --border: #334155;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.app-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 12px;
+}
+
+/* 手机端优化 */
+@media (max-width: 768px) {
+    .app-container {
+        padding: 8px;
+    }
+    
+    header h1 {
+        font-size: 1.6rem;
+    }
+    
+    .main-content {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+    
+    .sidebar {
+        padding: 16px;
+    }
+    
+    .brand-templates {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 6px;
+    }
+    
+    .brand-btn {
+        font-size: 0.7rem;
+        padding: 6px 2px;
+    }
+    
+    .grid {
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 10px;
+    }
+    
+    .image-card img {
+        height: 120px;
+    }
+    
+    .modal-content {
+        width: 95%;
+        padding: 16px;
+    }
+    
+    .adjustment-controls {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Sidebar */
+.sidebar {
+    background: var(--card);
+    border-radius: 12px;
+    padding: 20px;
+    border: 1px solid var(--border);
+    height: fit-content;
+}
+
+@media (max-width: 768px) {
+    .sidebar {
+        padding: 16px;
+    }
+    
+    .brand-templates {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 6px;
+    }
+    
+    .brand-btn {
+        font-size: 0.7rem;
+        padding: 6px 2px;
+    }
+}
+
+.template-section {
+    margin-bottom: 24px;
+}
+
+.template-section h4 {
+    font-size: 0.95rem;
+    margin-bottom: 10px;
+    color: #94a3b8;
+}
+
+.brand-templates {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+}
+
+.brand-btn {
+    background: #334155;
+    border: 1px solid var(--border);
+    color: white;
+    padding: 8px 4px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.brand-btn:hover {
+    background: var(--primary);
+    border-color: var(--primary);
+}
+
+.custom-controls input[type="text"] {
+    width: 100%;
+    padding: 10px;
+    background: #0f172a;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: white;
+    margin-bottom: 12px;
+}
+
+.row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.row label {
+    flex: 1;
+    font-size: 0.9rem;
+}
+
+.row input[type="range"] {
+    flex: 2;
+}
+
+/* Workspace */
+.workspace {
+    background: var(--card);
+    border-radius: 12px;
+    padding: 24px;
+    border: 1px solid var(--border);
+}
+
+.upload-area {
+    border: 2px dashed #475569;
+    border-radius: 16px;
+    padding: 60px 20px;
+    text-align: center;
+    transition: all 0.3s;
+}
+
+.upload-area.dragover {
+    border-color: var(--primary);
+    background: rgba(79, 70, 229, 0.1);
+}
+
+.upload-content p {
+    margin-bottom: 16px;
+    color: #94a3b8;
+}
+
+.btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s;
+    background: #475569;
+    color: white;
+}
+
+.btn.primary {
+    background: var(--primary);
+}
+
+.btn.primary:hover {
+    background: var(--primary-dark);
+}
+
+.btn.danger {
+    background: #ef4444;
+}
+
+.images-grid {
+    margin-top: 20px;
+}
+
+.grid-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 16px;
+}
+
+@media (max-width: 768px) {
+    .grid {
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 10px;
+    }
+    
+    .image-card img {
+        height: 120px;
+    }
+}
+
+.image-card {
+    background: #0f172a;
+    border-radius: 12px;
+    overflow: hidden;
+    position: relative;
+    border: 1px solid var(--border);
+}
+
+.image-card img {
+    width: 100%;
+    height: 160px;
+    object-fit: cover;
+    display: block;
+}
+
+.image-card .info {
+    padding: 10px;
+    font-size: 0.85rem;
+}
+
+.image-card .actions {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    display: flex;
+    gap: 6px;
+}
+
+.image-card .actions button {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: rgba(15, 23, 42, 0.8);
+    border: none;
+    color: white;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+/* Modal */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.75);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal.show {
+    display: flex;
+}
+
+.modal-content {
+    background: var(--card);
+    border-radius: 16px;
+    width: 90%;
+    max-width: 720px;
+    padding: 24px;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.close-btn {
+    font-size: 28px;
+    background: none;
+    border: none;
+    color: #94a3b8;
+    cursor: pointer;
+}
+
+.preview-container {
+    background: #0f172a;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: center;
+}
+
+.adjustment-controls {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.control-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.control-group label {
+    flex: 1;
+    font-size: 0.9rem;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+}
+
+.hint {
+    font-size: 0.8rem;
+    color: #64748b;
+}
