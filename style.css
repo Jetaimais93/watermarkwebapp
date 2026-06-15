@@ -16,18 +16,17 @@ body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans SC", sans-serif;
     background: var(--bg);
     color: var(--text);
-    line-height: 1.5;
 }
 
 .app-container {
-    max-width: 1400px;
+    max-width: 1600px;
     margin: 0 auto;
     padding: 16px;
 }
 
 header {
     text-align: center;
-    margin-bottom: 24px;
+    margin-bottom: 20px;
 }
 
 .header-content {
@@ -44,22 +43,21 @@ header {
 }
 
 header h1 {
-    font-size: 1.8rem;
+    font-size: 1.7rem;
 }
 
 .main-content {
     display: grid;
-    grid-template-columns: 340px 1fr;
-    gap: 24px;
+    grid-template-columns: 320px 1fr 380px;
+    gap: 20px;
 }
 
-/* 手机端响应 */
-@media (max-width: 900px) {
+@media (max-width: 1200px) {
     .main-content {
         grid-template-columns: 1fr;
     }
-    .sidebar {
-        order: 2;
+    .preview-panel {
+        order: -1;
     }
 }
 
@@ -67,63 +65,58 @@ header h1 {
 .sidebar {
     background: var(--card);
     border-radius: 16px;
-    padding: 20px;
+    padding: 18px;
     border: 1px solid var(--border);
+    max-height: 92vh;
+    overflow-y: auto;
 }
 
 .section {
-    margin-bottom: 28px;
+    margin-bottom: 24px;
 }
 
 .section h3 {
-    font-size: 1rem;
-    margin-bottom: 12px;
+    font-size: 0.95rem;
+    margin-bottom: 10px;
     color: #94a3b8;
 }
 
 .watermark-group {
     background: #0f172a;
-    padding: 14px;
+    padding: 12px;
     border-radius: 10px;
-    margin-bottom: 14px;
+    margin-bottom: 12px;
 }
 
 .watermark-group h4 {
-    font-size: 0.9rem;
-    margin-bottom: 10px;
+    font-size: 0.85rem;
+    margin-bottom: 8px;
     color: #64748b;
 }
 
 .brand-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 8px;
-}
-
-@media (max-width: 900px) {
-    .brand-grid {
-        grid-template-columns: repeat(4, 1fr);
-    }
+    gap: 6px;
 }
 
 .brand-btn {
     background: #334155;
     border: 1px solid var(--border);
     color: white;
-    padding: 8px 6px;
-    border-radius: 10px;
-    font-size: 0.75rem;
+    padding: 6px 4px;
+    border-radius: 8px;
+    font-size: 0.7rem;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 4px;
+    gap: 3px;
     cursor: pointer;
-    transition: all 0.2s;
 }
 
 .brand-btn img {
-    width: 32px;
-    height: 32px;
+    width: 28px;
+    height: 28px;
     object-fit: contain;
 }
 
@@ -136,27 +129,25 @@ header h1 {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 10px;
-    font-size: 0.9rem;
+    margin-bottom: 8px;
+    font-size: 0.85rem;
 }
 
-.control-row input[type="range"],
-.control-row select,
-.control-row input[type="color"] {
+.control-row input[type="range"] {
     flex: 1;
-    margin-left: 12px;
+    margin-left: 10px;
 }
 
 .btn {
-    padding: 10px 18px;
+    padding: 9px 16px;
     border: none;
     border-radius: 8px;
     cursor: pointer;
     font-weight: 500;
-    transition: 0.2s;
     background: #475569;
     color: white;
     width: 100%;
+    font-size: 0.9rem;
 }
 
 .btn.primary {
@@ -170,27 +161,25 @@ header h1 {
 /* 上传区 */
 .upload-area {
     border: 2px dashed #475569;
-    border-radius: 20px;
-    padding: 70px 20px;
+    border-radius: 18px;
+    padding: 60px 20px;
     text-align: center;
-    transition: 0.3s;
 }
 
 .upload-area.dragover {
     border-color: var(--primary);
-    background: rgba(99, 102, 241, 0.1);
 }
 
-/* 图片网格 */
+/* 照片网格 */
 .grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-    gap: 14px;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 12px;
 }
 
 .image-card {
     background: #0f172a;
-    border-radius: 12px;
+    border-radius: 10px;
     overflow: hidden;
     position: relative;
     border: 1px solid var(--border);
@@ -198,37 +187,84 @@ header h1 {
 
 .image-card img {
     width: 100%;
-    height: 140px;
+    height: 120px;
     object-fit: cover;
 }
 
 .image-card .info {
-    padding: 10px;
-    font-size: 0.85rem;
+    padding: 8px;
+    font-size: 0.8rem;
 }
 
 .image-card .meta {
-    font-size: 0.7rem;
+    font-size: 0.65rem;
     color: #64748b;
 }
 
 .image-card .actions {
     position: absolute;
-    top: 8px;
-    right: 8px;
+    top: 6px;
+    right: 6px;
     display: flex;
     gap: 4px;
 }
 
 .image-card .actions button {
-    width: 28px;
-    height: 28px;
+    width: 26px;
+    height: 26px;
     border-radius: 50%;
     background: rgba(15, 23, 42, 0.85);
     border: none;
     color: white;
-    font-size: 13px;
+    font-size: 12px;
     cursor: pointer;
+}
+
+/* 右侧实时预览面板 */
+.preview-panel {
+    background: var(--card);
+    border-radius: 16px;
+    padding: 16px;
+    border: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+}
+
+.preview-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.preview-header h3 {
+    font-size: 1rem;
+}
+
+.preview-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.live-preview-wrapper {
+    background: #0f172a;
+    border-radius: 12px;
+    overflow: hidden;
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 400px;
+}
+
+#livePreviewCanvas {
+    max-width: 100%;
+    max-height: 100%;
+    border-radius: 8px;
+}
+
+.live-controls {
+    margin-top: 12px;
 }
 
 /* 模态框 */
@@ -236,7 +272,7 @@ header h1 {
     display: none;
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.8);
+    background: rgba(0,0,0,0.85);
     z-index: 100;
     align-items: center;
     justify-content: center;
@@ -248,21 +284,17 @@ header h1 {
 
 .modal-content {
     background: var(--card);
-    border-radius: 20px;
-    padding: 24px;
+    border-radius: 18px;
+    padding: 20px;
     width: 95%;
-    max-width: 980px;
-}
-
-.modal-content.large {
-    max-width: 1100px;
+    max-width: 1200px;
 }
 
 .preview-wrapper {
     background: #0f172a;
     border-radius: 12px;
     overflow: hidden;
-    margin: 20px 0;
+    margin: 16px 0;
     display: flex;
     justify-content: center;
 }
@@ -270,23 +302,16 @@ header h1 {
 #previewCanvas {
     max-width: 100%;
     height: auto;
-    border-radius: 8px;
-}
-
-.preview-controls {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 16px;
-    margin-bottom: 20px;
 }
 
 .modal-actions {
     display: flex;
     gap: 12px;
     justify-content: flex-end;
+    margin-top: 16px;
 }
 
-/* 模板列表 */
+/* 模板 */
 .template-item {
     background: #334155;
     padding: 8px 12px;
@@ -296,13 +321,13 @@ header h1 {
     justify-content: space-between;
     align-items: center;
     cursor: pointer;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
 }
 
 .template-item button {
     background: none;
     border: none;
     color: #ef4444;
-    font-size: 18px;
+    font-size: 16px;
     cursor: pointer;
 }

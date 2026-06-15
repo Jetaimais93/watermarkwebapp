@@ -8,7 +8,6 @@
     <link rel="manifest" href="manifest.json">
     <script src="https://cdn.jsdelivr.net/npm/exifr@7.1.3/dist/exifr.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-    <!-- 免费字体 -->
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&family=Noto+Serif+SC:wght@400;700&family=Roboto:wght@400;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -27,16 +26,13 @@
                 <!-- 品牌水印 -->
                 <div class="section">
                     <h3>📷 品牌水印</h3>
-                    <div class="brand-grid" id="brandTemplates">
-                        <!-- JS 动态生成 -->
-                    </div>
+                    <div class="brand-grid" id="brandTemplates"></div>
                 </div>
 
                 <!-- 自定义水印 -->
                 <div class="section">
                     <h3>✍️ 自定义水印</h3>
                     
-                    <!-- 文字水印 -->
                     <div class="watermark-group">
                         <h4>文字水印</h4>
                         <input type="text" id="customText" placeholder="输入文字" value="@你的名字">
@@ -53,8 +49,8 @@
                         </div>
                         
                         <div class="control-row">
-                            <label>大小 <span id="fontSizeValue">32</span></label>
-                            <input type="range" id="fontSize" min="12" max="120" value="32">
+                            <label>大小 <span id="fontSizeValue">36</span></label>
+                            <input type="range" id="fontSize" min="12" max="140" value="36">
                         </div>
                         
                         <div class="control-row">
@@ -63,14 +59,13 @@
                         </div>
                         
                         <div class="control-row">
-                            <label>透明度 <span id="textOpacityValue">85</span>%</label>
-                            <input type="range" id="textOpacity" min="10" max="100" value="85">
+                            <label>透明度 <span id="textOpacityValue">88</span>%</label>
+                            <input type="range" id="textOpacity" min="10" max="100" value="88">
                         </div>
                         
                         <button id="addTextWatermarkBtn" class="btn primary">添加文字水印</button>
                     </div>
 
-                    <!-- 图片水印 -->
                     <div class="watermark-group">
                         <h4>图片水印</h4>
                         <button id="uploadImageWatermarkBtn" class="btn">上传图片水印</button>
@@ -97,12 +92,12 @@
                         </select>
                     </div>
                     <div class="control-row">
-                        <label>宽度 <span id="borderWidthValue">8</span>px</label>
-                        <input type="range" id="borderWidth" min="0" max="80" value="8">
+                        <label>宽度 <span id="borderWidthValue">10</span>px</label>
+                        <input type="range" id="borderWidth" min="0" max="100" value="10">
                     </div>
                     <div class="control-row">
                         <label>圆角 <span id="borderRadiusValue">0</span>px</label>
-                        <input type="range" id="borderRadius" min="0" max="100" value="0">
+                        <input type="range" id="borderRadius" min="0" max="120" value="0">
                     </div>
                     <div class="control-row">
                         <label>颜色</label>
@@ -111,7 +106,6 @@
                     <button id="applyBorderBtn" class="btn">应用到所有图片</button>
                 </div>
 
-                <!-- 模板 -->
                 <div class="section">
                     <h3>💾 我的模板</h3>
                     <div id="myTemplates"></div>
@@ -119,7 +113,7 @@
                 </div>
             </div>
 
-            <!-- 主工作区 -->
+            <!-- 中间：照片列表 -->
             <div class="workspace">
                 <div class="upload-area" id="uploadArea">
                     <div class="upload-content">
@@ -142,39 +136,59 @@
                     <div class="grid" id="gridContainer"></div>
                 </div>
             </div>
+
+            <!-- 右侧：实时预览 -->
+            <div class="preview-panel">
+                <div class="preview-header">
+                    <h3>实时预览</h3>
+                    <div class="preview-actions">
+                        <button id="openFineTuneBtn" class="btn">精细调整</button>
+                        <button id="downloadCurrentBtn" class="btn primary">下载高清 PNG</button>
+                    </div>
+                </div>
+                
+                <div class="live-preview-wrapper">
+                    <canvas id="livePreviewCanvas" width="800" height="600"></canvas>
+                </div>
+                
+                <div class="live-controls">
+                    <div class="control-row">
+                        <label>画幅</label>
+                        <select id="aspectRatio">
+                            <option value="original">原始比例</option>
+                            <option value="16:9">16:9</option>
+                            <option value="4:3">4:3</option>
+                            <option value="3:2">3:2</option>
+                            <option value="1:1">1:1 正方形</option>
+                            <option value="9:16">9:16 竖版</option>
+                        </select>
+                    </div>
+                    <div class="control-row">
+                        <label>透明度 <span id="liveOpacityValue">88</span>%</label>
+                        <input type="range" id="liveOpacity" min="10" max="100" value="88">
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- 预览模态框 -->
+    <!-- 精细调整模态框 -->
     <div id="previewModal" class="modal">
         <div class="modal-content large">
             <div class="modal-header">
-                <h3>实时预览（可拖拽调整）</h3>
+                <h3>精细调整</h3>
                 <button class="close-btn" id="closeModal">×</button>
             </div>
             
             <div class="preview-wrapper">
-                <canvas id="previewCanvas" width="900" height="600"></canvas>
+                <canvas id="previewCanvas" width="1100" height="750"></canvas>
             </div>
 
             <div class="preview-controls">
                 <div class="control-group">
-                    <label>画幅</label>
-                    <select id="aspectRatio">
-                        <option value="original">原始比例</option>
-                        <option value="16:9">16:9</option>
-                        <option value="4:3">4:3</option>
-                        <option value="3:2">3:2</option>
-                        <option value="1:1">1:1 正方形</option>
-                        <option value="9:16">9:16 竖版</option>
-                    </select>
+                    <label>全局透明度 <span id="globalOpacityValue">88</span>%</label>
+                    <input type="range" id="globalOpacity" min="10" max="100" value="88">
                 </div>
-
-                <div class="control-group">
-                    <label>全局透明度 <span id="globalOpacityValue">85</span>%</label>
-                    <input type="range" id="globalOpacity" min="10" max="100" value="85">
-                </div>
-
                 <div class="control-group">
                     <label>旋转 <span id="rotationValue">0</span>°</label>
                     <input type="range" id="rotation" min="-45" max="45" step="5" value="0">

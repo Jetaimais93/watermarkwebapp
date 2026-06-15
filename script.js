@@ -1,16 +1,12 @@
-// ==================== 水印边框大师 Web版 - 高自由度版 ====================
+// ==================== 水印边框大师 - 高清版 ====================
 
 let images = [];
 let currentPreviewIndex = null;
 let currentBrand = null;
 let currentTextWatermark = null;
 let currentImageWatermark = null;
-let previewSettings = {
-    posX: 50, posY: 50, scale: 1, rotation: 0, opacity: 0.85,
-    borderStyle: 'none', borderWidth: 8, borderRadius: 0, borderColor: '#000000'
-};
 
-// ==================== 品牌配置（带 logo） ====================
+// ==================== 品牌配置 ====================
 const brandTemplates = [
     { id: 'SONY', name: 'Sony', logo: 'logos/SONY.png' },
     { id: 'leica', name: 'Leica', logo: 'logos/leica.png' },
@@ -45,6 +41,7 @@ function init() {
     initBrandButtons();
     initUpload();
     initControls();
+    initLivePreview();
     initModal();
     loadSavedTemplates();
 }
@@ -61,43 +58,35 @@ function initBrandButtons() {
             <img src="${brand.logo}" alt="${brand.name}" onerror="this.style.display='none'">
             <span>${brand.name}</span>
         `;
-        btn.onclick = () => selectBrand(brand, btn);
+        btn.onclick = () => {
+            currentBrand = brand;
+            currentTextWatermark = null;
+            currentImageWatermark = null;
+            document.querySelectorAll('.brand-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            updateLivePreview();
+        };
         container.appendChild(btn);
     });
 }
 
-function selectBrand(brand, btn) {
-    currentBrand = brand;
-    currentTextWatermark = null;
-    currentImageWatermark = null;
-
-    document.querySelectorAll('.brand-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-}
-
-// ==================== 上传功能 ====================
+// ==================== 上传 ====================
 function initUpload() {
     const uploadArea = document.getElementById('uploadArea');
     const fileInput = document.getElementById('fileInput');
     const uploadBtn = document.getElementById('uploadBtn');
 
-    const triggerUpload = (e) => {
-        e.preventDefault();
-        fileInput.click();
-    };
-
-    uploadBtn.addEventListener('click', triggerUpload);
-    uploadBtn.addEventListener('touchend', triggerUpload);
-    uploadArea.addEventListener('click', triggerUpload);
+    const trigger = (e) => { e.preventDefault(); fileInput.click(); };
+    uploadBtn.addEventListener('click', trigger);
+    uploadBtn.addEventListener('touchend', trigger);
+    uploadArea.addEventListener('click', trigger);
 
     uploadArea.addEventListener('dragover', e => { e.preventDefault(); uploadArea.classList.add('dragover'); });
     uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('dragover'));
     uploadArea.addEventListener('drop', e => {
-        e.preventDefault();
-        uploadArea.classList.remove('dragover');
+        e.preventDefault(); uploadArea.classList.remove('dragover');
         handleFiles(e.dataTransfer.files);
     });
-
     fileInput.onchange = () => handleFiles(fileInput.files);
 }
 
@@ -111,10 +100,8 @@ async function handleFiles(fileList) {
 
     for (const file of files) {
         if (!file.type.startsWith('image/')) continue;
-
         const id = Date.now() + Math.random().toString(36).substr(2, 9);
         const url = URL.createObjectURL(file);
-
         let exif = {};
         try { exif = await exifr.parse(file, { gps: false }); } catch (e) {}
 
@@ -130,16 +117,15 @@ function renderImageCard(imgData) {
     const card = document.createElement('div');
     card.className = 'image-card';
     card.dataset.id = imgData.id;
-
     const src = imgData.processedUrl || imgData.originalUrl;
     card.innerHTML = `
         <img src="${src}" alt="">
         <div class="info">
             <div>${imgData.file.name}</div>
-            <div class="meta">${imgData.exif?.Make || '未知'}</div>
+            <div class="meta">${imgData.exif?.Make || ''}</div>
         </div>
         <div class="actions">
-            <button onclick="openPreview('${imgData.id}')">✏️</button>
+            <button onclick="selectImageForPreview('${imgData.id}')">👁️</button>
             <button onclick="downloadSingle('${imgData.id}')">⬇️</button>
             <button onclick="deleteImage('${imgData.id}', this)">🗑️</button>
         </div>
@@ -155,11 +141,9 @@ function refreshGrid() {
 
 // ==================== 控制面板 ====================
 function initControls() {
-    // 文字水印
     document.getElementById('addTextWatermarkBtn').onclick = () => {
         const text = document.getElementById('customText').value.trim();
         if (!text) return alert('请输入文字');
-
         currentTextWatermark = {
             text,
             fontSize: parseInt(document.getElementById('fontSize').value),
@@ -169,52 +153,52 @@ function initControls() {
         };
         currentBrand = null;
         currentImageWatermark = null;
-        alert('文字水印已设置');
+        updateLivePreview();
     };
 
-    // 图片水印
     setupImageWatermark();
 
-    // 边框
     document.getElementById('applyBorderBtn').onclick = applyBorderToAll;
 
-    // 滑块实时更新
-    ['fontSize', 'textOpacity', 'borderWidth', 'borderRadius'].forEach(id => {
+    ['fontSize', 'textOpacity', 'borderWidth', 'borderRadius', 'liveOpacity'].forEach(id => {
         const el = document.getElementById(id);
-        if (el) el.oninput = updateSliderValues;
+        if (el) el.oninput = () => {
+            updateSliderValues();
+            updateLivePreview();
+        };
     });
 
+    document.getElementById('aspectRatio').onchange = updateLivePreview;
     document.getElementById('saveTemplateBtn').onclick = saveCurrentTemplate;
     updateSliderValues();
 }
 
 function updateSliderValues() {
-    const ids = [
+    const map = [
         ['fontSize', 'fontSizeValue'],
         ['textOpacity', 'textOpacityValue'],
         ['borderWidth', 'borderWidthValue'],
-        ['borderRadius', 'borderRadiusValue']
+        ['borderRadius', 'borderRadiusValue'],
+        ['liveOpacity', 'liveOpacityValue']
     ];
-    ids.forEach(([inputId, spanId]) => {
-        const input = document.getElementById(inputId);
-        const span = document.getElementById(spanId);
-        if (input && span) span.textContent = input.value;
+    map.forEach(([input, span]) => {
+        const i = document.getElementById(input);
+        const s = document.getElementById(span);
+        if (i && s) s.textContent = i.value;
     });
 }
 
 function setupImageWatermark() {
-    const uploadBtn = document.getElementById('uploadImageWatermarkBtn');
-    const fileInput = document.getElementById('imageWatermarkInput');
+    const btn = document.getElementById('uploadImageWatermarkBtn');
+    const input = document.getElementById('imageWatermarkInput');
     const preview = document.getElementById('imageWatermarkPreview');
     const thumb = document.getElementById('imageWatermarkThumb');
-    const removeBtn = document.getElementById('removeImageWatermarkBtn');
+    const remove = document.getElementById('removeImageWatermarkBtn');
 
-    uploadBtn.onclick = () => fileInput.click();
-
-    fileInput.onchange = (e) => {
+    btn.onclick = () => input.click();
+    input.onchange = (e) => {
         const file = e.target.files[0];
         if (!file) return;
-
         const reader = new FileReader();
         reader.onload = (ev) => {
             const img = new Image();
@@ -222,20 +206,21 @@ function setupImageWatermark() {
                 currentImageWatermark = { url: ev.target.result, image: img };
                 thumb.src = ev.target.result;
                 preview.style.display = 'block';
-                uploadBtn.style.display = 'none';
+                btn.style.display = 'none';
                 currentBrand = null;
                 currentTextWatermark = null;
+                updateLivePreview();
             };
             img.src = ev.target.result;
         };
         reader.readAsDataURL(file);
     };
-
-    removeBtn.onclick = () => {
+    remove.onclick = () => {
         currentImageWatermark = null;
         preview.style.display = 'none';
-        uploadBtn.style.display = 'block';
-        fileInput.value = '';
+        btn.style.display = 'block';
+        input.value = '';
+        updateLivePreview();
     };
 }
 
@@ -249,201 +234,136 @@ function applyBorderToAll() {
         if (!img.settings) img.settings = {};
         img.settings.border = { style, width, radius, color };
     });
-    alert('边框已应用到所有图片');
+    alert('边框已应用');
     refreshGrid();
+    updateLivePreview();
 }
 
-// ==================== 预览模态框 ====================
-function initModal() {
-    const modal = document.getElementById('previewModal');
-    document.getElementById('closeModal').onclick = () => modal.classList.remove('show');
+// ==================== 右侧实时预览 ====================
+function initLivePreview() {
+    const canvas = document.getElementById('livePreviewCanvas');
+    const opacitySlider = document.getElementById('liveOpacity');
+    const aspect = document.getElementById('aspectRatio');
 
-    document.getElementById('applyToCurrentBtn').onclick = () => applyToCurrent(true);
-    document.getElementById('applyToAllBtn').onclick = () => applyToCurrent(false);
+    opacitySlider.oninput = updateLivePreview;
+    aspect.onchange = updateLivePreview;
 
-    // 滑块联动
-    ['globalOpacity', 'rotation', 'aspectRatio'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.oninput = () => {
-            if (currentPreviewIndex !== null) {
-                const imgData = images[currentPreviewIndex];
-                renderPreviewCanvas(imgData);
-            }
-        };
-    });
-}
-
-function openPreview(id) {
-    const idx = images.findIndex(i => i.id === id);
-    if (idx === -1) return;
-    currentPreviewIndex = idx;
-
-    const modal = document.getElementById('previewModal');
-    modal.classList.add('show');
-
-    const imgData = images[idx];
-    const s = imgData.settings || previewSettings;
-
-    // 恢复设置
-    document.getElementById('globalOpacity').value = Math.round((s.opacity || 0.85) * 100);
-    document.getElementById('rotation').value = s.rotation || 0;
-    document.getElementById('aspectRatio').value = s.aspectRatio || 'original';
-
-    updateModalSliders();
-    renderPreviewCanvas(imgData);
-}
-
-function updateModalSliders() {
-    const opacity = document.getElementById('globalOpacity');
-    const rot = document.getElementById('rotation');
-    document.getElementById('globalOpacityValue').textContent = opacity.value;
-    document.getElementById('rotationValue').textContent = rot.value;
-}
-
-// ==================== 核心：绘制水印 ====================
-async function renderPreviewCanvas(imgData) {
-    const canvas = document.getElementById('previewCanvas');
-    const ctx = canvas.getContext('2d');
-
-    const img = new Image();
-    img.src = imgData.originalUrl;
-    await new Promise(r => img.onload = r);
-
-    // 根据画幅调整画布
-    const ratio = document.getElementById('aspectRatio').value;
-    let cw = img.width, ch = img.height;
-
-    if (ratio === '16:9') { cw = 900; ch = 506; }
-    else if (ratio === '4:3') { cw = 900; ch = 675; }
-    else if (ratio === '3:2') { cw = 900; ch = 600; }
-    else if (ratio === '1:1') { cw = 700; ch = 700; }
-    else if (ratio === '9:16') { cw = 506; ch = 900; }
-
-    canvas.width = cw;
-    canvas.height = ch;
-
-    ctx.drawImage(img, 0, 0, cw, ch);
-
-    const settings = getCurrentSettings();
-    drawAllWatermarks(ctx, cw, ch, settings, imgData);
-}
-
-function getCurrentSettings() {
-    return {
-        opacity: parseFloat(document.getElementById('globalOpacity').value) / 100,
-        rotation: parseFloat(document.getElementById('rotation').value),
-        aspectRatio: document.getElementById('aspectRatio').value,
-        border: {
-            style: document.getElementById('borderStyle').value,
-            width: parseInt(document.getElementById('borderWidth').value),
-            radius: parseInt(document.getElementById('borderRadius').value),
-            color: document.getElementById('borderColor').value
+    // 下载当前预览（高清PNG）
+    document.getElementById('downloadCurrentBtn').onclick = downloadCurrentAsPNG;
+    document.getElementById('openFineTuneBtn').onclick = () => {
+        if (currentPreviewIndex !== null) {
+            openFineTuneModal(images[currentPreviewIndex]);
+        } else if (images.length > 0) {
+            currentPreviewIndex = 0;
+            openFineTuneModal(images[0]);
+        } else {
+            alert('请先上传照片');
         }
     };
 }
 
-function drawAllWatermarks(ctx, w, h, settings, imgData) {
-    ctx.save();
-    ctx.globalAlpha = settings.opacity;
+function updateLivePreview() {
+    if (images.length === 0) return;
+    const canvas = document.getElementById('livePreviewCanvas');
+    const ctx = canvas.getContext('2d');
 
-    // 1. 品牌水印
-    if (currentBrand && currentBrand.logo) {
-        drawBrandLogo(ctx, w, h, currentBrand, settings);
-    }
-    // 2. 文字水印
-    else if (currentTextWatermark) {
-        drawTextWatermark(ctx, w, h, currentTextWatermark, settings);
-    }
-    // 3. 图片水印
-    else if (currentImageWatermark && currentImageWatermark.image) {
-        drawImageWatermark(ctx, w, h, currentImageWatermark, settings);
-    }
+    // 默认使用第一张或当前选中的
+    let target = images[0];
+    if (currentPreviewIndex !== null) target = images[currentPreviewIndex];
 
-    // 4. 边框
-    if (settings.border && settings.border.style !== 'none') {
-        drawBorder(ctx, w, h, settings.border);
-    }
+    const img = new Image();
+    img.src = target.originalUrl;
+    img.onload = () => {
+        let cw = 800, ch = 600;
+        const ratio = document.getElementById('aspectRatio').value;
+        if (ratio === '16:9') { cw = 800; ch = 450; }
+        else if (ratio === '4:3') { cw = 800; ch = 600; }
+        else if (ratio === '3:2') { cw = 800; ch = 533; }
+        else if (ratio === '1:1') { cw = 600; ch = 600; }
+        else if (ratio === '9:16') { cw = 450; ch = 800; }
 
-    ctx.restore();
+        canvas.width = cw;
+        canvas.height = ch;
+        ctx.drawImage(img, 0, 0, cw, ch);
+
+        const opacity = parseFloat(document.getElementById('liveOpacity').value) / 100;
+        ctx.globalAlpha = opacity;
+
+        // 绘制水印
+        if (currentBrand) drawBrandLogo(ctx, cw, ch, currentBrand);
+        else if (currentTextWatermark) drawTextWatermark(ctx, cw, ch, currentTextWatermark);
+        else if (currentImageWatermark) drawImageWatermark(ctx, cw, ch, currentImageWatermark);
+
+        // 边框
+        const borderStyle = document.getElementById('borderStyle').value;
+        if (borderStyle !== 'none') {
+            const border = {
+                style: borderStyle,
+                width: parseInt(document.getElementById('borderWidth').value),
+                radius: parseInt(document.getElementById('borderRadius').value),
+                color: document.getElementById('borderColor').value
+            };
+            drawBorder(ctx, cw, ch, border);
+        }
+    };
 }
 
-function drawBrandLogo(ctx, canvasW, canvasH, brand, settings) {
+function drawBrandLogo(ctx, w, h, brand) {
     const img = new Image();
     img.src = brand.logo;
-    // 简化处理：直接绘制
-    const scale = 0.6;
-    const logoW = 220 * scale;
-    const logoH = 70 * scale;
-    const x = canvasW * 0.5 - logoW / 2;
-    const y = canvasH * 0.92 - logoH / 2;
-
-    ctx.drawImage(img, x, y, logoW, logoH);
+    const scale = 0.55;
+    const lw = 240 * scale, lh = 75 * scale;
+    ctx.drawImage(img, w * 0.5 - lw / 2, h * 0.9 - lh / 2, lw, lh);
 }
 
-function drawTextWatermark(ctx, canvasW, canvasH, wm, settings) {
+function drawTextWatermark(ctx, w, h, wm) {
     ctx.font = `bold ${wm.fontSize}px ${wm.fontFamily}`;
     ctx.fillStyle = wm.color;
     ctx.textAlign = 'center';
-
-    const x = canvasW * 0.5;
-    const y = canvasH * 0.92;
-    ctx.fillText(wm.text, x, y);
+    ctx.fillText(wm.text, w * 0.5, h * 0.92);
 }
 
-function drawImageWatermark(ctx, canvasW, canvasH, wm, settings) {
+function drawImageWatermark(ctx, w, h, wm) {
     const img = wm.image;
-    const scale = 0.6;
-    const w = img.width * scale;
-    const h = img.height * scale;
-    const x = canvasW * 0.5 - w / 2;
-    const y = canvasH * 0.92 - h / 2;
-    ctx.drawImage(img, x, y, w, h);
+    const scale = 0.5;
+    const iw = img.width * scale, ih = img.height * scale;
+    ctx.drawImage(img, w * 0.5 - iw / 2, h * 0.88 - ih / 2, iw, ih);
 }
 
 function drawBorder(ctx, w, h, border) {
     ctx.strokeStyle = border.color;
     ctx.lineWidth = border.width;
-
     if (border.style === 'rect' || border.style === 'rounded') {
         const r = border.style === 'rounded' ? border.radius : 0;
         ctx.beginPath();
-        ctx.roundRect(border.width/2, border.width/2, w - border.width, h - border.width, r);
+        ctx.roundRect(border.width / 2, border.width / 2, w - border.width, h - border.width, r);
         ctx.stroke();
     } else if (border.style === 'square') {
         const size = Math.min(w, h) - border.width;
-        const x = (w - size) / 2;
-        const y = (h - size) / 2;
-        ctx.strokeRect(x, y, size, size);
+        ctx.strokeRect((w - size) / 2, (h - size) / 2, size, size);
     } else if (border.style === 'circle') {
         const r = Math.min(w, h) / 2 - border.width / 2;
         ctx.beginPath();
-        ctx.arc(w/2, h/2, r, 0, Math.PI * 2);
+        ctx.arc(w / 2, h / 2, r, 0, Math.PI * 2);
         ctx.stroke();
     }
 }
 
-// ==================== 应用水印 ====================
-function applyToCurrent(applyAll = false) {
-    const settings = getCurrentSettings();
-    const targetImages = applyAll ? images : [images[currentPreviewIndex]];
+// ==================== 下载高清 PNG ====================
+function downloadCurrentAsPNG() {
+    if (images.length === 0) return alert('请先上传照片');
 
-    targetImages.forEach(img => {
-        img.settings = { ...settings };
-        if (currentBrand) img.settings.brand = currentBrand;
-        if (currentTextWatermark) img.settings.text = currentTextWatermark;
-        if (currentImageWatermark) img.settings.imageWm = currentImageWatermark;
-
-        generateProcessedImage(img);
-    });
-
-    document.getElementById('previewModal').classList.remove('show');
-    setTimeout(() => {
-        refreshGrid();
-        document.getElementById('downloadAllBtn').disabled = false;
-    }, 600);
+    const canvas = document.getElementById('livePreviewCanvas');
+    const link = document.createElement('a');
+    link.download = `watermark_${Date.now()}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
 }
 
-function generateProcessedImage(imgData) {
+function downloadSingle(id) {
+    const imgData = images.find(i => i.id === id);
+    if (!imgData) return;
+
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
     const img = new Image();
@@ -454,77 +374,146 @@ function generateProcessedImage(imgData) {
         canvas.height = img.height;
         ctx.drawImage(img, 0, 0);
 
-        const s = imgData.settings || {};
-        if (s.brand || s.text || s.imageWm) {
-            // 简化版绘制
-            ctx.globalAlpha = s.opacity || 0.85;
-            if (s.brand) drawBrandLogo(ctx, img.width, img.height, s.brand, s);
-            if (s.text) drawTextWatermark(ctx, img.width, img.height, s.text, s);
-            if (s.imageWm) drawImageWatermark(ctx, img.width, img.height, s.imageWm, s);
+        // 绘制水印（简化版）
+        if (imgData.settings) {
+            ctx.globalAlpha = imgData.settings.opacity || 0.85;
+            if (imgData.settings.brand) drawBrandLogo(ctx, img.width, img.height, imgData.settings.brand);
+            if (imgData.settings.text) drawTextWatermark(ctx, img.width, img.height, imgData.settings.text);
+            if (imgData.settings.imageWm) drawImageWatermark(ctx, img.width, img.height, imgData.settings.imageWm);
+            if (imgData.settings.border) drawBorder(ctx, img.width, img.height, imgData.settings.border);
         }
-        if (s.border && s.border.style !== 'none') {
-            drawBorder(ctx, img.width, img.height, s.border);
-        }
-        imgData.processedUrl = canvas.toDataURL('image/jpeg', 0.92);
+        const link = document.createElement('a');
+        link.download = `watermark_${imgData.file.name.split('.')[0]}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
     };
 }
 
-// ==================== 其他功能 ====================
-function downloadSingle(id) {
-    const img = images.find(i => i.id === id);
-    if (!img) return;
-    const link = document.createElement('a');
-    link.download = `watermarked_${img.file.name}`;
-    link.href = img.processedUrl || img.originalUrl;
-    link.click();
+// ==================== 选择图片更新预览 ====================
+function selectImageForPreview(id) {
+    const idx = images.findIndex(i => i.id === id);
+    if (idx === -1) return;
+    currentPreviewIndex = idx;
+    updateLivePreview();
 }
 
-async function downloadAllAsZip() {
-    const zip = new JSZip();
-    for (const img of images) {
-        const url = img.processedUrl || img.originalUrl;
-        const blob = await (await fetch(url)).blob();
-        zip.file(`watermarked_${img.file.name}`, blob);
-    }
-    const content = await zip.generateAsync({ type: 'blob' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(content);
-    link.download = `watermarked_${Date.now()}.zip`;
-    link.click();
+// ==================== 精细调整模态框 ====================
+function initModal() {
+    const modal = document.getElementById('previewModal');
+    document.getElementById('closeModal').onclick = () => modal.classList.remove('show');
+    document.getElementById('applyToCurrentBtn').onclick = () => applyToCurrent(true);
+    document.getElementById('applyToAllBtn').onclick = () => applyToCurrent(false);
+
+    ['globalOpacity', 'rotation'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.oninput = () => {
+            if (currentPreviewIndex !== null) renderFinePreview(images[currentPreviewIndex]);
+        };
+    });
 }
 
-function deleteImage(id, btn) {
-    images = images.filter(i => i.id !== id);
-    btn.closest('.image-card').remove();
-    document.getElementById('imageCount').textContent = `${images.length} 张照片`;
+function openFineTuneModal(imgData) {
+    currentPreviewIndex = images.findIndex(i => i.id === imgData.id);
+    const modal = document.getElementById('previewModal');
+    modal.classList.add('show');
+    renderFinePreview(imgData);
 }
 
-function clearAll() {
-    if (!confirm('确定清空吗？')) return;
-    images = [];
-    document.getElementById('gridContainer').innerHTML = '';
-    document.getElementById('imagesGrid').style.display = 'none';
-    document.getElementById('uploadArea').style.display = 'block';
+function renderFinePreview(imgData) {
+    const canvas = document.getElementById('previewCanvas');
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+    img.src = imgData.originalUrl;
+    img.onload = () => {
+        canvas.width = 1100;
+        canvas.height = 750;
+        ctx.drawImage(img, 0, 0, 1100, 750);
+
+        const opacity = parseFloat(document.getElementById('globalOpacity').value) / 100;
+        ctx.globalAlpha = opacity;
+
+        if (currentBrand) drawBrandLogo(ctx, 1100, 750, currentBrand);
+        else if (currentTextWatermark) drawTextWatermark(ctx, 1100, 750, currentTextWatermark);
+        else if (currentImageWatermark) drawImageWatermark(ctx, 1100, 750, currentImageWatermark);
+
+        const borderStyle = document.getElementById('borderStyle').value;
+        if (borderStyle !== 'none') {
+            const border = {
+                style: borderStyle,
+                width: parseInt(document.getElementById('borderWidth').value),
+                radius: parseInt(document.getElementById('borderRadius').value),
+                color: document.getElementById('borderColor').value
+            };
+            drawBorder(ctx, 1100, 750, border);
+        }
+    };
 }
 
+function applyToCurrent(applyAll = false) {
+    const settings = {
+        opacity: parseFloat(document.getElementById('globalOpacity').value) / 100,
+        rotation: parseFloat(document.getElementById('rotation').value),
+        border: {
+            style: document.getElementById('borderStyle').value,
+            width: parseInt(document.getElementById('borderWidth').value),
+            radius: parseInt(document.getElementById('borderRadius').value),
+            color: document.getElementById('borderColor').value
+        }
+    };
+
+    const targets = applyAll ? images : [images[currentPreviewIndex]];
+    targets.forEach(img => {
+        img.settings = { ...settings };
+        if (currentBrand) img.settings.brand = currentBrand;
+        if (currentTextWatermark) img.settings.text = currentTextWatermark;
+        if (currentImageWatermark) img.settings.imageWm = currentImageWatermark;
+        generateProcessedImage(img);
+    });
+
+    document.getElementById('previewModal').classList.remove('show');
+    setTimeout(() => {
+        refreshGrid();
+        updateLivePreview();
+        document.getElementById('downloadAllBtn').disabled = false;
+    }, 500);
+}
+
+function generateProcessedImage(imgData) {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+    img.src = imgData.originalUrl;
+    img.onload = () => {
+        canvas.width = img.width;
+        canvas.height = img.height;
+        ctx.drawImage(img, 0, 0);
+
+        if (imgData.settings) {
+            ctx.globalAlpha = imgData.settings.opacity || 0.85;
+            if (imgData.settings.brand) drawBrandLogo(ctx, img.width, img.height, imgData.settings.brand);
+            if (imgData.settings.text) drawTextWatermark(ctx, img.width, img.height, imgData.settings.text);
+            if (imgData.settings.imageWm) drawImageWatermark(ctx, img.width, img.height, imgData.settings.imageWm);
+            if (imgData.settings.border) drawBorder(ctx, img.width, img.height, imgData.settings.border);
+        }
+        imgData.processedUrl = canvas.toDataURL('image/png');
+    };
+}
+
+// ==================== 模板 ====================
 function saveCurrentTemplate() {
     const name = prompt('模板名称', '我的水印模板');
     if (!name) return;
-
     const template = {
         name,
         brand: currentBrand,
         text: currentTextWatermark,
-        imageWm: currentImageWatermark ? true : false,
         border: {
             style: document.getElementById('borderStyle').value,
             width: document.getElementById('borderWidth').value,
             radius: document.getElementById('borderRadius').value,
             color: document.getElementById('borderColor').value
-        },
-        timestamp: Date.now()
+        }
     };
-
     let saved = JSON.parse(localStorage.getItem('wmTemplates') || '[]');
     saved.push(template);
     localStorage.setItem('wmTemplates', JSON.stringify(saved));
@@ -535,14 +524,10 @@ function loadSavedTemplates() {
     const container = document.getElementById('myTemplates');
     container.innerHTML = '';
     const saved = JSON.parse(localStorage.getItem('wmTemplates') || '[]');
-
     saved.forEach((tpl, index) => {
         const div = document.createElement('div');
         div.className = 'template-item';
-        div.innerHTML = `
-            <span>${tpl.name}</span>
-            <button onclick="event.stopImmediatePropagation();deleteTemplate(${index},this)">×</button>
-        `;
+        div.innerHTML = `<span>${tpl.name}</span><button onclick="event.stopImmediatePropagation();deleteTemplate(${index},this)">×</button>`;
         div.onclick = () => loadTemplate(tpl);
         container.appendChild(div);
     });
@@ -565,6 +550,7 @@ function loadTemplate(tpl) {
         document.getElementById('borderColor').value = tpl.border.color;
     }
     alert(`模板「${tpl.name}」已加载`);
+    updateLivePreview();
 }
 
 // ==================== 启动 ====================
